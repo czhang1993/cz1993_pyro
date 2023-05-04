@@ -15,17 +15,35 @@ from pyro.util import check_site_shape
 
 
 class ELBOModule(torch.nn.Module):
-    def __init__(self, model: torch.nn.Module, guide: torch.nn.Module, elbo: "ELBO"):
+    def __init__(
+        self, 
+        model: torch.nn.Module, 
+        guide: torch.nn.Module, 
+        elbo: "ELBO"
+    ):
         super().__init__()
         self.model = model
         self.guide = guide
         self.elbo = elbo
 
-    def forward(self, *args, **kwargs):
-        return self.elbo.differentiable_loss(self.model, self.guide, *args, **kwargs)
+    # define a forward propogation function
+    def forward(
+        self, 
+        *args, 
+        **kwargs
+    ):
+        return self.elbo.differentiable_loss(
+            self.model, 
+            self.guide, 
+            *args, 
+            **kwargs
+        )
 
 
-class ELBO(object, metaclass=ABCMeta):
+class ELBO(
+    object, 
+    metaclass=ABCMeta
+):
     """
     :class:`ELBO` is the top-level interface for stochastic variational
     inference via optimization of the evidence lower bound.
@@ -106,21 +124,24 @@ class ELBO(object, metaclass=ABCMeta):
 
     def __init__(
         self,
-        num_particles=1,
+        num_particles=1,  # number of particles/samples used to form the ELBO (gradient) estimators
         max_plate_nesting=float("inf"),
         max_iarange_nesting=None,  # DEPRECATED
-        vectorize_particles=False,
+        vectorize_particles=False,  # whether to vectorise the ELBO computation over "num_particles". defaults to False
         strict_enumeration_warning=True,
         ignore_jit_warnings=False,
         jit_options=None,
         retain_graph=None,
         tail_adaptive_beta=-1.0,
     ):
+        # if parameter max_iarange_nesting is assigned
         if max_iarange_nesting is not None:
+            # raise a warning, informing that this parameter is deprecated and has been replaced with parameter max_plate_nesting
             warnings.warn(
                 "max_iarange_nesting is deprecated; use max_plate_nesting instead",
                 DeprecationWarning,
             )
+            # assign parameter max_plate_nesting with the value that parameter max_iarange_nesting is assigned with
             max_plate_nesting = max_iarange_nesting
         self.max_plate_nesting = max_plate_nesting
         self.num_particles = num_particles
@@ -133,14 +154,28 @@ class ELBO(object, metaclass=ABCMeta):
         self.jit_options = jit_options
         self.tail_adaptive_beta = tail_adaptive_beta
 
-    def __call__(self, model: torch.nn.Module, guide: torch.nn.Module) -> ELBOModule:
+    def __call__(
+        self, 
+        model: torch.nn.Module, 
+        guide: torch.nn.Module
+    ) -> ELBOModule:
         """
         Given a model and guide, returns a :class:`~torch.nn.Module` which
         computes the ELBO loss when called with arguments to the model and guide.
         """
-        return ELBOModule(model, guide, self)
+        return ELBOModule(
+            model, 
+            guide, 
+            self
+        )
 
-    def _guess_max_plate_nesting(self, model, guide, args, kwargs):
+    def _guess_max_plate_nesting(
+        self, 
+        model, 
+        guide, 
+        args, 
+        kwargs
+    ):
         """
         Guesses max_plate_nesting by running the (model,guide) pair once
         without enumeration. This optimistically assumes static model
@@ -201,7 +236,13 @@ class ELBO(object, metaclass=ABCMeta):
             dim=-self.max_plate_nesting,
         )(fn)
 
-    def _get_vectorized_trace(self, model, guide, args, kwargs):
+    def _get_vectorized_trace(
+        self, 
+        model, 
+        guide, 
+        args, 
+        kwargs
+    ):
         """
         Wraps the model and guide to vectorize ELBO computation over
         ``num_particles``, and returns a single trace from the wrapped model
