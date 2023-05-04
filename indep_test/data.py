@@ -15,13 +15,17 @@ u1 = u[:n, :]
 u2 = u[n:2 * n, :]
 
 np.random.seed(seed=2)
-x = np.concatenate((np.ones(shape=(n, 1)), 
-                    np.random.normal(loc=0, scale=1, size=(n, m - 1))), 
-                   axis=1)
+x = np.concatenate(
+  (np.ones(shape=(n, 1)),
+   np.random.normal(loc=0, scale=1, size=(n, m - 1))),
+  axis=1
+)
 
-z1 = np.concatenate((np.ones(shape=(n, 1)),
-                     np.dot(x, w1) + u1),
-                    axis=1)
+z1 = np.concatenate(
+  (np.ones(shape=(n, 1)),
+   np.dot(x, w1) + u1),
+  axis=1
+)
 z2 = np.dot(x, w2) + np.dot(z1, w3) + u2
 
 p = 1 / (1 + np.exp(-z2))
@@ -29,7 +33,14 @@ p = 1 / (1 + np.exp(-z2))
 y = p >= 0.5
 y = y.astype(np.float64)
 
-d = np.concatenate((x[:, 1:], z1[:, 1:], y), axis=1)
+d = np.concatenate(
+  (
+    x[:, 1:],
+    z1[:, 1:],
+    y
+  ), 
+  axis=1
+)
 
 # print(np.unique(y, return_counts=True))
 # print(d[:5, :])
